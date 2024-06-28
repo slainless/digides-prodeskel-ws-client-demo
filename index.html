@@ -31,6 +31,8 @@
     body,
     main {
       min-height: 100vh;
+      background-color: var(--cds-background);
+      color: var(--cds-text-primary);
     }
 
     main {
@@ -54,11 +56,11 @@
     }
 
     cds-header {
-      border-block-end-width: 1px;
+      border-block-end: 1px solid var(--cds-border-subtle);
     }
 
     #output-panel-container {
-      background-color: var(--cds-layer-01);
+      background-color: var(--cds-layer);
       padding: 20px;
     }
 
@@ -95,6 +97,7 @@
 
     const store = Alpine.reactive({
       $server: 'wss://prodeskel.digides.id/ws',
+      theme: 'system',
 
       username: '',
       password: '',
@@ -155,6 +158,12 @@
       get syncProgressHelperText() {
         if (this.syncProgress == null) return 'Not started'
         return `${this.syncProgress.value}%`
+      },
+
+      get carbonTheme() {
+        const isDark = this.theme == 'system' ? window.matchMedia('(prefers-color-scheme: dark)').matches : this.theme == 'dark'
+        if (isDark) return 'g100'
+        return 'white'
       }
     })
 
@@ -165,7 +174,7 @@
 
 </head>
 
-<body class="cds-theme-zone-white" x-data>
+<body :class="`cds-theme-zone-${$store.app.carbonTheme}`" class="cds-theme-zone-white" x-data>
   <cds-header>
     <cds-header-name prefix="DIGIDES">Prodeskel Synchonizer Client</cds-header-name>
   </cds-header>
