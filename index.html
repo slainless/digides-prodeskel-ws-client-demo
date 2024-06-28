@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prodeskel Sync Client Demo</title>
+  <link rel="stylesheet" href="https://1.www.s81c.com/common/carbon/web-components/tag/next/cssgrid.css" />
+  <link rel="stylesheet" href="https://1.www.s81c.com/common/carbon/web-components/tag/next/themes.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/button.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/form-group.min.js"></script>
+  <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/layer.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/loading.min.js"></script>
+  <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/modal.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/progress-bar.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/text-input.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/ui-shell.min.js"></script>
+  <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/stack.min.js"></script>
+  <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/tag.min.js"></script>
+  <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/tabs.min.js"></script>
+
+  <style>
+    body,
+    main {
+      min-height: 100vh;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: max-content auto;
+    }
+
+    #control-section {
+      width: 300px;
+      padding-inline: 20px;
+      background-color: var(--cds-layer);
+      border-inline-end: 1px solid var(--cds-border-subtle);
+    }
+
+    main>* {
+      padding-top: 80px;
+    }
+
+    #output-section {
+      padding-inline: 20px;
+    }
+
+    cds-header {
+      border-block-end-width: 1px;
+    }
+
+    #output-panel-container {
+      background-color: var(--cds-layer-01);
+      padding: 20px;
+    }
+
+    #message-log-area {
+      display: block;
+      height: 320px;
+      background-color: var(--cds-layer);
+      overflow: auto;
+    }
+  </style>
+
+  <script type="module">
+    import Alpine from 'https://esm.sh/alpinejs'
+    import pDebounce from 'https://esm.sh/p-debounce'
+
+    function createClient(server) {
+      const socket = new WebSocket(server)
+      return new Promise((res, rej) => {
+        socket.addEventListener('open', (e) => {
+          res(socket)
+        })
+
+        socket.addEventListener('error', (e) => {
+          rej(e)
+        })
+
+        socket.addEventListener('close', (e) => {
+          rej(e)
+        })
+      })
+    }
+
+    window.createClient = pDebounce(createClient, 500)
+
+    const store = {
+      server: 'wss://prodeskel.digides.id/ws',
+      username: '',
+      password: '',
+      schema: '',
+
+      connection: null,
+
+      status: 'loading',
+
+      syncProgress: null,
+
+      clearConnection() {
+        this.connection?.close()
+        this.connection = null
+        this.status = 'loading'
+        this.syncProgress = null
+      },
+
+      async renewConnection() {
+        this.clearConnection()
+        try {
+          this.connection = await createClient(this.server)
+          this.status = 'idle'
+        } catch {
+          this.status = 'failed'
+        }
+      },
+
+      get statusColor() {
+        switch (this.status) {
+          case 'loading': return 'gray'
+          case 'syncing': return 'blue'
+          case 'idle': return 'green'
+          case 'failed': return 'red'
+          default: return 'gray'
+        }
+      },
+
+      get statusText() {
+        switch (this.status) {
+          case 'loading': return 'Connecting...'
+          case 'syncing': return 'Synchronizing'
+          case 'idle': return 'Connected'
+          case 'failed': return 'Failed'
+          default: return 'Unknown'
+        }
+      },
+
+      get syncProgressHelperText() {
+        if (this.syncProgress == null) return 'Not started'
+        return `${this.syncProgress.value}%`
+      }
+    }
+
+    Alpine.store('app', store)
+    Alpine.start()
+  </script>
+
+</head>
+
+<body class="cds-theme-zone-white" x-data>
+  <cds-header>
+    <cds-header-name prefix="DIGIDES">Prodeskel Synchonizer Client</cds-header-name>
+  </cds-header>
+  <main>
+    <cds-layer id="control-section">
+      <cds-form-group legend-text="Client Control">
+        <cds-layer>
+          <cds-stack gap="5">
+            <cds-text-input id="input-server" label="Server" x-init="$store.app.renewConnection()"
+              @input.debounce.500ms="$store.app.server = $event.target.value; $store.app.renewConnection()"
+              :value="$store.app.server" :helper-text="`Server endpoint, can be local or remote`"></cds-text-input>
+            <cds-text-input id="input-username" label="Username" x-model="$store.app.username" placeholder="Username"
+              helper-text="Username used in DIGIDES system"></cds-text-input>
+            <cds-text-input id="input-password" type="password" label="Password" x-model="$store.app.password"
+              placeholder="Password"></cds-text-input>
+            <cds-text-input id="input-schema" label="Schema" x-model="$store.app.schema" placeholder="Schema"
+              helper-text="Schema used in DIGIDES system"></cds-text-input>
+          </cds-stack>
+        </cds-layer>
+      </cds-form-group>
+    </cds-layer>
+    <cds-layer id="output-section">
+      <cds-stack gap="4">
+        <cds-stack orientation="horizontal" gap="4">
+          <span class="flex items-center">Status</span>
+          <cds-tag id="status" x-data :type="$store.app.statusColor" x-text="$store.app.statusText"></cds-tag>
+        </cds-stack>
+        <cds-stack>
+          <cds-progress-bar id="progress-bar" label="Synchronization Progress"
+            :value="$store.app.syncProgress?.value ?? 0" :helper-text="$store.app.syncProgressHelperText">
+          </cds-progress-bar>
+        </cds-stack>
+        <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
+          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'idle'">Start</cds-button>
+          <cds-button id="stop" size="md" kind="secondary" :disabled="$store.app.status != 'syncing'">Stop</cds-button>
+        </cds-stack>
+        <cds-stack class="mt-6" style="--cds-stack-gap: 0">
+          <cds-tabs value="all" type="contained">
+            <cds-tab id="tab-all" target="panel-all" value="all">Message Log</cds-tab>
+          </cds-tabs>
+          <div id="output-panel-container">
+            <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" hidden="">
+              <cds-layer id="message-log-area">
+              </cds-layer>
+            </div>
+          </div>
+        </cds-stack>
+    </cds-layer>
+  </main>
+</body>
+
+</html>
