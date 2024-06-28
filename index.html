@@ -91,10 +91,11 @@
       })
     }
 
-    window.createClient = pDebounce(createClient, 500)
+    const debouncedCreateClient = pDebounce(createClient, 500)
 
-    const store = {
-      server: 'wss://prodeskel.digides.id/ws',
+    const store = Alpine.reactive({
+      $server: 'wss://prodeskel.digides.id/ws',
+
       username: '',
       password: '',
       schema: '',
@@ -110,6 +111,15 @@
         this.connection = null
         this.status = 'loading'
         this.syncProgress = null
+      },
+
+      get server() {
+        return this.$server
+      },
+
+      set server(server) {
+        this.$server = server
+        this.renewConnection()
       },
 
       async renewConnection() {
@@ -146,10 +156,11 @@
         if (this.syncProgress == null) return 'Not started'
         return `${this.syncProgress.value}%`
       }
-    }
+    })
 
     Alpine.store('app', store)
     Alpine.start()
+    store.renewConnection()
   </script>
 
 </head>
@@ -163,9 +174,8 @@
       <cds-form-group legend-text="Client Control">
         <cds-layer>
           <cds-stack gap="5">
-            <cds-text-input id="input-server" label="Server" x-init="$store.app.renewConnection()"
-              @input.debounce.500ms="$store.app.server = $event.target.value; $store.app.renewConnection()"
-              :value="$store.app.server" :helper-text="`Server endpoint, can be local or remote`"></cds-text-input>
+            <cds-text-input id="input-server" label="Server" x-model.debounce.500ms="$store.app.server"
+              :helper-text="`Server endpoint, can be local or remote`"></cds-text-input>
             <cds-text-input id="input-username" label="Username" x-model="$store.app.username" placeholder="Username"
               helper-text="Username used in DIGIDES system"></cds-text-input>
             <cds-text-input id="input-password" type="password" label="Password" x-model="$store.app.password"
