@@ -7,6 +7,7 @@
   <title>Prodeskel Sync Client Demo</title>
   <link rel="stylesheet" href="https://1.www.s81c.com/common/carbon/web-components/tag/next/cssgrid.css" />
   <link rel="stylesheet" href="https://1.www.s81c.com/common/carbon/web-components/tag/next/themes.css" />
+  <link href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script type="module"
@@ -26,6 +27,12 @@
   <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/stack.min.js"></script>
   <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/tag.min.js"></script>
   <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/tabs.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/icon-button.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/tooltip.min.js"></script>
+  <script type="module"
+    src="https://1.www.s81c.com/common/carbon/web-components/version/v2.10.0/inline-loading.min.js"></script>
 
   <style>
     body,
@@ -74,6 +81,7 @@
 
   <script type="module">
     import Alpine from 'https://esm.sh/alpinejs'
+    import { ProdeskelWebSocket, State } from 'https://esm.sh/jsr/@slainless/prodeskel-ws/browser'
     import pDebounce from 'https://esm.sh/p-debounce'
 
     import { render } from 'https://esm.sh/@lit-labs/ssr'
@@ -101,53 +109,54 @@
       schema: '',
 
       connection: null,
+      state: State.INITIAL,
 
-      status: 'loading',
+      messageLog: [],
 
       syncProgress: null,
 
       clearConnection() {
-        this.connection?.close()
+        this.connection?.close?.()
         this.connection = null
-        this.status = 'loading'
         this.syncProgress = null
-      },
-
-      get server() {
-        return this.$server
-      },
-
-      set server(server) {
-        this.$server = server
-        this.renewConnection()
+        this.state = State.INITIAL
+        this.messageLog = []
       },
 
       async renewConnection() {
         this.clearConnection()
+        this.connection = new ProdeskelWebSocket(this.server, undefined, 1000)
+
         try {
-          this.connection = await createClient(this.server)
-          this.status = 'idle'
-        } catch {
-          this.status = 'failed'
+          await this.connection.ready()
+          this.state = State.CONNECTED
+
+          this.connection
+            .on("state_change", (state) => { this.state = state })
+        } catch (e) {
+          console.error("Renew connection error:", e)
+          this.state = State.ERROR
         }
       },
 
       get statusColor() {
-        switch (this.status) {
-          case 'loading': return 'gray'
-          case 'syncing': return 'blue'
-          case 'idle': return 'green'
-          case 'failed': return 'red'
+        switch (this.state) {
+          case State.INITIAL: return 'gray'
+          case State.CONNECTED: return 'teal'
+          case State.IDLE: return 'green'
+          case State.SYNCING: return 'purple'
+          case State.ERROR: return 'red'
           default: return 'gray'
         }
       },
 
       get statusText() {
-        switch (this.status) {
-          case 'loading': return 'Connecting...'
-          case 'syncing': return 'Synchronizing'
-          case 'idle': return 'Connected'
-          case 'failed': return 'Failed'
+        switch (this.state) {
+          case State.INITIAL: return 'Connecting'
+          case State.CONNECTED: return 'Connected'
+          case State.IDLE: return 'Ready'
+          case State.SYNCING: return 'Synchronizing'
+          case State.ERROR: return 'Failed'
           default: return 'Unknown'
         }
       },
@@ -186,7 +195,12 @@
 
     Alpine.store('app', store)
     Alpine.start()
-    store.renewConnection()
+
+    Alpine.effect(async () => {
+      if (store.server) {
+        await store.renewConnection()
+      }
+    })
   </script>
 
 </head>
@@ -230,8 +244,12 @@
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
-          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'idle'">Start</cds-button>
-          <cds-button id="stop" size="md" kind="secondary" :disabled="$store.app.status != 'syncing'">Stop</cds-button>
+          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'connected'"
+            @click="await $store.app.login()">
+            Login
+          </cds-button>
+          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'ready'">Start</cds-button>
+          <cds-button id="stop" size="md" kind="danger" :disabled="$store.app.status != 'syncing'">Stop</cds-button>
         </cds-stack>
         <cds-stack class="mt-6" style="--cds-stack-gap: 0">
           <cds-tabs value="all" type="contained">
@@ -239,7 +257,11 @@
           </cds-tabs>
           <div id="output-panel-container">
             <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" hidden="">
-              <cds-layer id="message-log-area">
+              <cds-layer id="message-log-area" :x-html="`
+                ${$store.app.messageLog.map(message => {
+                  return `<div>${message}</div>\n`
+                })}
+              `">
               </cds-layer>
             </div>
           </div>
