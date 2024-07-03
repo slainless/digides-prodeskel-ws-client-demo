@@ -76,24 +76,21 @@
     import Alpine from 'https://esm.sh/alpinejs'
     import pDebounce from 'https://esm.sh/p-debounce'
 
-    function createClient(server) {
-      const socket = new WebSocket(server)
-      return new Promise((res, rej) => {
-        socket.addEventListener('open', (e) => {
-          res(socket)
-        })
+    import { render } from 'https://esm.sh/@lit-labs/ssr'
+    import { collectResultSync } from 'https://esm.sh/@lit-labs/ssr/lib/render-result.js'
+    import { html } from 'https://esm.sh/lit'
 
-        socket.addEventListener('error', (e) => {
-          rej(e)
-        })
+    import Screen16 from 'https://esm.sh/@carbon/web-components/es/icons/screen/16'
+    import Light16 from 'https://esm.sh/@carbon/web-components/es/icons/light/16'
+    import Asleep16 from 'https://esm.sh/@carbon/web-components/es/icons/asleep/16'
 
-        socket.addEventListener('close', (e) => {
-          rej(e)
-        })
-      })
+    const h = (...args) => collectResultSync(render(...args))
+
+    const themeIcons = {
+      light: h(Light16({ slot: "icon" })),
+      dark: h(Asleep16({ slot: "icon" })),
+      system: h(Screen16({ slot: "icon" })),
     }
-
-    const debouncedCreateClient = pDebounce(createClient, 500)
 
     const store = Alpine.reactive({
       server: 'wss://prodeskel.server.ws.id/ws',
@@ -164,6 +161,26 @@
         const isDark = this.theme == 'system' ? window.matchMedia('(prefers-color-scheme: dark)').matches : this.theme == 'dark'
         if (isDark) return 'g100'
         return 'white'
+      },
+
+      get themeIcon() {
+        return themeIcons[this.theme]
+      },
+
+      get themeText() {
+        switch (this.theme) {
+          case 'system': return "Same as device"
+          case 'dark': return "Dark theme"
+          case 'light': return "Light theme"
+        }
+      },
+
+      toggleTheme() {
+        switch (this.theme) {
+          case 'system': return this.theme = 'dark'
+          case 'dark': return this.theme = 'light'
+          case 'light': return this.theme = 'system'
+        }
       }
     })
 
@@ -177,6 +194,12 @@
 <body :class="`cds-theme-zone-${$store.app.carbonTheme}`" class="cds-theme-zone-white" x-data>
   <cds-header>
     <cds-header-name prefix="DIGIDES">Prodeskel Synchonizer Client</cds-header-name>
+    <cds-stack class="flex flex-grow justify-end" orientation="horizontal">
+      <cds-header-global-action
+        x-html="`<div slot='icon' style='color: var(--cds-text-primary);'>${$store.app.themeIcon}</div>`"
+        :tooltip-text="$store.app.themeText" @click="$store.app.toggleTheme()" tooltip-alignment="right">
+      </cds-header-global-action>
+    </cds-stack>
   </cds-header>
   <main>
     <cds-layer id="control-section">
