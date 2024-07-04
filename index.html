@@ -139,6 +139,16 @@
         }
       },
 
+      async login() {
+        if (
+          this.connection == null ||
+          this.connection.state !== State.CONNECTED ||
+          !this.username || !this.password || !this.schema
+        ) return
+
+        await this.connection.login(this.username, this.password, this.schema)
+      },
+
       get statusColor() {
         switch (this.state) {
           case State.INITIAL: return 'gray'
@@ -194,6 +204,35 @@
     })
 
     Alpine.store('app', store)
+    Alpine.store('types', {
+      State
+    })
+    Alpine.store('handler', {
+      async onLogin(event) {
+        const el = event.target
+        clearTimeout(Number(el.dataset.timeoutId))
+
+        el.disabled = true
+        el.textContent = 'Logging in'
+
+        const isLoggedIn = await store.login().catch(e => e)
+        if (isLoggedIn === false || isLoggedIn instanceof Error) {
+          el.setAttribute('kind', 'danger')
+          el.textContent = 'Failed'
+          el.dataset.timeoutId = setTimeout(() => {
+            el.setAttribute('kind', 'primary')
+            el.textContent = 'Login'
+            delete el.dataset.timeoutId
+          }, 2000)
+        } else {
+          el.textContent = 'Login'
+        }
+
+        el.disabled = false
+      }
+    })
+
+
     Alpine.start()
 
     Alpine.effect(async () => {
@@ -244,12 +283,14 @@
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
-          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'connected'"
-            @click="await $store.app.login()">
+          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.CONNECTED"
+            @click="$store.handler.onLogin">
             Login
           </cds-button>
-          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.status != 'ready'">Start</cds-button>
-          <cds-button id="stop" size="md" kind="danger" :disabled="$store.app.status != 'syncing'">Stop</cds-button>
+          <cds-button id="start" size="md" kind="primary"
+            :disabled="$store.app.state != $store.types.State.IDLE">Start</cds-button>
+          <cds-button id="stop" size="md" kind="danger"
+            :disabled="$store.app.state != $store.types.State.SYNCING">Stop</cds-button>
         </cds-stack>
         <cds-stack class="mt-6" style="--cds-stack-gap: 0">
           <cds-tabs value="all" type="contained">
@@ -257,7 +298,7 @@
           </cds-tabs>
           <div id="output-panel-container">
             <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" hidden="">
-              <cds-layer id="message-log-area" :x-html="`
+              <cds-layer id="message-log-area" x-html="`
                 ${$store.app.messageLog.map(message => {
                   return `<div>${message}</div>\n`
                 })}
