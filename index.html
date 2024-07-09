@@ -151,7 +151,9 @@
           this.state = State.CONNECTED
 
           this.connection
+            .on("message", (packet) => { this.messageLog.push(JSON.stringify(packet)) })
             .on("state_change", (state) => { this.state = state })
+            .on("sync_progress", (progress) => { this.syncProgress = progress })
         } catch (e) {
           console.error("Renew connection error:", e)
           this.state = State.ERROR
@@ -163,9 +165,27 @@
           this.connection == null ||
           this.connection.state !== State.CONNECTED ||
           !this.username || !this.password || !this.schema
-        ) return
+        ) return false
 
-        await this.connection.login(this.username, this.password, this.schema)
+        return this.connection.login(this.username, this.password, this.schema)
+      },
+
+      async start() {
+        if (
+          this.connection == null ||
+          this.connection.state !== State.IDLE
+        ) return false
+
+        return this.connection.start()
+      },
+
+      async stop() {
+        if (
+          this.connection == null ||
+          this.connection.state !== State.SYNCING
+        ) return false
+
+        return this.connection.stop()
       },
 
       get statusColor() {
