@@ -106,9 +106,9 @@
 
     const h = (...args) => collectResultSync(render(...args))
 
-    const floatFormatter = new Intl.NumberFormat(undefined, {
-      style: 'percent',
-      minimumFractionDigits: 2,
+    const floatFormatter = new Intl.NumberFormat("id-ID", {
+      style: 'unit',
+      unit: "percent",
       maximumFractionDigits: 2,
     })
 
@@ -345,11 +345,10 @@
           </cds-tabs>
           <div id="output-panel-container">
             <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" hidden="">
-              <cds-layer id="message-log-area" x-html="`
-                ${$store.app.messageLog.map(message => {
-                  return `<div>${message}</div>\n`
-                })}
-              `">
+              <cds-layer id="message-log-area" x-html="`<pre><code>${
+                $store.app.messageLog.map(message => {
+                  return `<span class='message-log-line'>${message}</span>`
+                }).join(`\n`)}</code></pre>`">
               </cds-layer>
             </div>
           </div>
