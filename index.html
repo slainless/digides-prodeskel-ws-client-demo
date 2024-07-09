@@ -201,7 +201,13 @@
               return 'Not started'
           }
 
-        return `${this.syncProgressPercentageFormatted}%`
+        const percentage = this.syncProgressPercentageFormatted
+        switch (this.state) {
+          case State.SYNCING:
+            return `${percentage} (${this.syncProgressValue}/${this.syncProgress.total})`
+          default:
+            return `Stopped at ${percentage} (${this.syncProgressValue}/${this.syncProgress.total})`
+        }
       },
 
       get syncProgressValue() {
@@ -216,11 +222,11 @@
 
       get syncProgressPercentage() {
         if (this.syncProgress == null) return 0
-        return this.syncProgressValue / this.syncProgress.total * 100
+        return (this.syncProgressValue / this.syncProgress.total) * 100
       },
 
       get syncProgressPercentageFormatted() {
-        return floatFormatter.format(this.syncProgressPercentage / 100)
+        return floatFormatter.format(this.syncProgressPercentage)
       },
 
       get carbonTheme() {
@@ -326,7 +332,9 @@
         </cds-stack>
         <cds-stack>
           <cds-progress-bar id="progress-bar" label="Synchronization Progress"
-            :value="$store.app.syncProgress?.value ?? 0" :helper-text="$store.app.syncProgressHelperText">
+            :value="$store.app.syncProgressPercentage"
+            :status="$store.app.state == $store.types.State.SYNCING ? 'active' : 'inactive'"
+            :helper-text="$store.app.syncProgressHelperText">
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
