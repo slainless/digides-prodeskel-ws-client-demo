@@ -94,6 +94,13 @@
 
     const h = (...args) => collectResultSync(render(...args))
 
+    const floatFormatter = new Intl.NumberFormat(undefined, {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+
+
     const themeIcons = {
       light: h(Light16({ slot: "icon" })),
       dark: h(Asleep16({ slot: "icon" })),
@@ -156,6 +163,7 @@
           case State.IDLE: return 'green'
           case State.SYNCING: return 'purple'
           case State.ERROR: return 'red'
+          case State.CLOSED: return 'red'
           default: return 'gray'
         }
       },
@@ -167,13 +175,40 @@
           case State.IDLE: return 'Ready'
           case State.SYNCING: return 'Synchronizing'
           case State.ERROR: return 'Failed'
+          case State.CLOSED: return 'Closed'
           default: return 'Unknown'
         }
       },
 
       get syncProgressHelperText() {
-        if (this.syncProgress == null) return 'Not started'
-        return `${this.syncProgress.value}%`
+        if (this.syncProgress == null)
+          switch (this.state) {
+            case State.SYNCING:
+              return 'Synchronizing...'
+            default:
+              return 'Not started'
+          }
+
+        return `${this.syncProgressPercentageFormatted}%`
+      },
+
+      get syncProgressValue() {
+        if (this.syncProgress == null) return 0
+        const sum =
+          this.syncProgress.success +
+          this.syncProgress.failed +
+          this.syncProgress.skipped
+
+        return sum
+      },
+
+      get syncProgressPercentage() {
+        if (this.syncProgress == null) return 0
+        return this.syncProgressValue / this.syncProgress.total * 100
+      },
+
+      get syncProgressPercentageFormatted() {
+        return floatFormatter.format(this.syncProgressPercentage / 100)
       },
 
       get carbonTheme() {
