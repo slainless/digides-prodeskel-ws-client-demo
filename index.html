@@ -276,6 +276,41 @@
       }
     })
 
+
+    function controlButton(el, config) {
+      clearTimeout(Number(el.dataset.timeoutId))
+      delete el.dataset.timeoutId
+
+      return {
+        loading() {
+          el.disabled = true
+          el.textContent = config.loadingText ?? "Loading"
+        },
+        disable() {
+          el.disabled = true
+        },
+        enable() {
+          el.disabled = false
+        },
+        reset() {
+          el.disabled = false
+          el.textContent = config.defaultText
+          clearTimeout(Number(el.dataset.timeoutId))
+          delete el.dataset.timeoutId
+        },
+        error() {
+          el.disabled = false
+          el.setAttribute('kind', 'danger')
+          el.textContent = config.errorText ?? "Failed"
+          el.dataset.timeoutId = setTimeout(() => {
+            el.setAttribute('kind', 'primary')
+            el.textContent = 'Login'
+            delete el.dataset.timeoutId
+          }, 2000)
+        }
+      }
+    }
+
     Alpine.store('app', store)
     Alpine.store('types', {
       State
@@ -283,28 +318,55 @@
     Alpine.store('handler', {
       async onLogin(event) {
         const el = event.target
-        clearTimeout(Number(el.dataset.timeoutId))
-
-        el.disabled = true
-        el.textContent = 'Logging in'
+        const control = controlButton(el, {
+          defaultText: "Login",
+          loadingText: "Logging in",
+        })
+        control.loading()
 
         const isLoggedIn = await store.login().catch(e => e)
         if (isLoggedIn === false || isLoggedIn instanceof Error) {
-          el.setAttribute('kind', 'danger')
-          el.textContent = 'Failed'
-          el.dataset.timeoutId = setTimeout(() => {
-            el.setAttribute('kind', 'primary')
-            el.textContent = 'Login'
-            delete el.dataset.timeoutId
-          }, 2000)
+          control.error()
         } else {
-          el.textContent = 'Login'
+          control.reset()
+          control.disable()
         }
+      },
 
-        el.disabled = false
+      async onStart(event) {
+        const el = event.target
+        const control = controlButton(el, {
+          defaultText: "Start",
+          loadingText: "Starting",
+        })
+        control.loading()
+
+        const isStarted = await store.start().catch(e => e)
+        if (isStarted === false || isStarted instanceof Error) {
+          control.error()
+        } else {
+          control.reset()
+          control.disable()
+        }
+      },
+
+      async onStop(event) {
+        const el = event.target
+        const control = controlButton(el, {
+          defaultText: "Stop",
+          loadingText: "Stopping",
+        })
+        control.loading()
+
+        const isStopped = await store.stop().catch(e => e)
+        if (isStopped === false || isStopped instanceof Error) {
+          control.error()
+        } else {
+          control.reset()
+          control.disable()
+        }
       }
     })
-
 
     Alpine.start()
 
@@ -362,10 +424,11 @@
             @click="$store.handler.onLogin">
             Login
           </cds-button>
-          <cds-button id="start" size="md" kind="primary"
-            :disabled="$store.app.state != $store.types.State.IDLE">Start</cds-button>
-          <cds-button id="stop" size="md" kind="danger"
-            :disabled="$store.app.state != $store.types.State.SYNCING">Stop</cds-button>
+          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.IDLE"
+            @click="$store.handler.onStart">Start</cds-button>
+          <cds-button id="stop" size="md" kind="danger" :disabled="$store.app.state != $store.types.State.SYNCING"
+            @click="$store.handler.onStop">
+            Stop</cds-button>
         </cds-stack>
         <cds-stack class="mt-6" style="--cds-stack-gap: 0">
           <cds-tabs value="all" type="contained">
