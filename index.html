@@ -317,10 +317,11 @@
     })
     Alpine.store('handler', {
       async onLogin(event) {
-        const el = event.target
+        const el = event.currentTarget
         const control = controlButton(el, {
           defaultText: "Login",
           loadingText: "Logging in",
+          defaultKind: 'primary',
         })
         control.loading()
 
@@ -334,7 +335,7 @@
       },
 
       async onStart(event) {
-        const el = event.target
+        const el = event.currentTarget
         const control = controlButton(el, {
           defaultText: "Start",
           loadingText: "Starting",
@@ -351,10 +352,11 @@
       },
 
       async onStop(event) {
-        const el = event.target
+        const el = event.currentTarget
         const control = controlButton(el, {
           defaultText: "Stop",
           loadingText: "Stopping",
+          defaultKind: "danger"
         })
         control.loading()
 
@@ -420,7 +422,7 @@
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
-          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.CONNECTED"
+          <cds-button id="login" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.CONNECTED"
             @click="$store.handler.onLogin">
             Login
           </cds-button>
