@@ -89,6 +89,10 @@
       font-family: "JetBrains Mono", monospace !important;
       font-optical-sizing: auto;
     }
+
+    .action-button {
+      width: 120px
+    }
   </style>
 
   <script type="module">
@@ -276,6 +280,7 @@
       }
     })
 
+    const bool = (v) => v === 'true' ? true : false
 
     function controlButton(el, config) {
       clearTimeout(Number(el.dataset.timeoutId))
@@ -283,7 +288,7 @@
 
       return {
         loading() {
-          el.disabled = true
+          el.disabled = bool(el.dataset.disabled) && true
           el.textContent = config.loadingText ?? "Loading"
         },
         disable() {
@@ -293,17 +298,17 @@
           el.disabled = false
         },
         reset() {
-          el.disabled = false
+          el.disabled = bool(el.dataset.disabled) || false
           el.textContent = config.defaultText
           clearTimeout(Number(el.dataset.timeoutId))
           delete el.dataset.timeoutId
         },
         error() {
-          el.disabled = false
+          el.disabled = bool(el.dataset.disabled) || false
           el.setAttribute('kind', 'danger')
           el.textContent = config.errorText ?? "Failed"
           el.dataset.timeoutId = setTimeout(() => {
-            el.setAttribute('kind', 'primary')
+            el.setAttribute('kind', config.defaultKind ?? 'secondary')
             el.textContent = 'Login'
             delete el.dataset.timeoutId
           }, 2000)
@@ -330,7 +335,6 @@
           control.error()
         } else {
           control.reset()
-          control.disable()
         }
       },
 
@@ -347,7 +351,6 @@
           control.error()
         } else {
           control.reset()
-          control.disable()
         }
       },
 
@@ -365,7 +368,6 @@
           control.error()
         } else {
           control.reset()
-          control.disable()
         }
       }
     })
@@ -422,14 +424,17 @@
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
-          <cds-button id="login" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.CONNECTED"
-            @click="$store.handler.onLogin">
+          <cds-button id="login" size="md" kind="primary" class="action-button"
+            :data-disabled="$store.app.state != $store.types.State.CONNECTED"
+            :disabled="$store.app.state != $store.types.State.CONNECTED" @click="$store.handler.onLogin">
             Login
           </cds-button>
-          <cds-button id="start" size="md" kind="primary" :disabled="$store.app.state != $store.types.State.IDLE"
-            @click="$store.handler.onStart">Start</cds-button>
-          <cds-button id="stop" size="md" kind="danger" :disabled="$store.app.state != $store.types.State.SYNCING"
-            @click="$store.handler.onStop">
+          <cds-button id="start" size="md" kind="primary" class="action-button"
+            :data-disabled="$store.app.state != $store.types.State.IDLE"
+            :disabled="$store.app.state != $store.types.State.IDLE" @click="$store.handler.onStart">Start</cds-button>
+          <cds-button id="stop" size="md" kind="danger" class="action-button"
+            :data-disabled="$store.app.state != $store.types.State.SYNCING"
+            :disabled="$store.app.state != $store.types.State.SYNCING" @click="$store.handler.onStop">
             Stop</cds-button>
         </cds-stack>
         <cds-stack class="mt-6" style="--cds-stack-gap: 0">
