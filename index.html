@@ -126,7 +126,7 @@
 
     const store = Alpine.reactive({
       server: 'wss://prodeskel.server.ws.id/ws',
-      theme: 'system',
+      theme: window.localStorage.getItem('digides_prodeskel_demo_theme') ?? 'system',
 
       username: '',
       password: '',
@@ -273,11 +273,15 @@
       },
 
       toggleTheme() {
+        let newTheme
         switch (this.theme) {
-          case 'system': return this.theme = 'dark'
-          case 'dark': return this.theme = 'light'
-          case 'light': return this.theme = 'system'
+          case 'system': newTheme = 'dark'; break
+          case 'dark': newTheme = 'light'; break
+          case 'light': newTheme = 'system'; break
         }
+
+        this.theme = newTheme
+        window.localStorage.setItem('digides_prodeskel_demo_theme', newTheme)
       }
     })
 
