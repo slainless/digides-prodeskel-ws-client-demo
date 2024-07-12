@@ -1,5 +1,7 @@
 # Prodeskel WebSocket Client Demo
 
+![Screenshot progress](./screenshot_progress.png)
+
 A simple demonstration of DIGIDES Prodeskel WebSocket usage and 
 [prodeskel-ws](https://github.com/slainless/prodeskel-ws) integration to the app.
 
@@ -21,3 +23,6 @@ This client is purely for demonstration purpose so it's a bit crude and probably
 not very optimized. Also, while this demo client is viewable in public domain, 
 the server is actually only accessible for DIGIDES end-user (who has access to DIGIDES 
 system and [prodeskel system](https://prodeskel.binapemdes.kemendagri.go.id/)).
+
+And obviously, the default server address is not the true address of DIGIDES
+prodeskel server to prevent abuse, sorry!
