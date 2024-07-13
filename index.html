@@ -392,9 +392,9 @@
   <cds-header>
     <cds-header-name prefix="DIGIDES">Prodeskel Synchonizer Client</cds-header-name>
     <cds-stack class="flex flex-grow justify-end" orientation="horizontal">
-      <cds-header-global-action
-        x-html="`<div slot='icon' style='color: var(--cds-text-primary);'>${$store.app.themeIcon}</div>`"
-        :tooltip-text="$store.app.themeText" @click="$store.app.toggleTheme()" tooltip-alignment="right">
+      <cds-header-global-action :tooltip-text="$store.app.themeText" @click="$store.app.toggleTheme()"
+        tooltip-alignment="right">
+        <div slot="icon" style="color: var(--cds-text-primary);" x-html="$store.app.themeIcon"></div>
       </cds-header-global-action>
     </cds-stack>
   </cds-header>
@@ -448,10 +448,8 @@
           </cds-tabs>
           <div id="output-panel-container">
             <div id="panel-all" role="tabpanel" aria-labelledby="tab-all" hidden="">
-              <cds-layer id="message-log-area" x-html="`<pre><code>${
-                $store.app.messageLog.map(message => {
-                  return `<span class='message-log-line'>${message}</span>`
-                }).join(`\n`)}</code></pre>`">
+              <cds-layer id="message-log-area">
+                <pre><code><template x-for="message in $store.app.messageLog"><span class="message-log-line" x-html="message + '\n'"></span></template></code></pre>
               </cds-layer>
             </div>
           </div>
