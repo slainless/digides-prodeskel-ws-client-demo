@@ -198,6 +198,7 @@
           case State.INITIAL: return 'gray'
           case State.CONNECTED: return 'teal'
           case State.IDLE: return 'green'
+          case State.QUEUING: return 'blue'
           case State.SYNCING: return 'purple'
           case State.ERROR: return 'red'
           case State.CLOSED: return 'red'
@@ -210,6 +211,7 @@
           case State.INITIAL: return 'Connecting'
           case State.CONNECTED: return 'Connected'
           case State.IDLE: return 'Ready'
+          case State.QUEUING: return 'Queuing'
           case State.SYNCING: return 'Synchronizing'
           case State.ERROR: return 'Failed'
           case State.CLOSED: return 'Closed'
@@ -222,6 +224,8 @@
           switch (this.state) {
             case State.SYNCING:
               return 'Synchronizing...'
+            case State.QUEUING:
+              return 'Waiting for turn...'
             default:
               return 'Not started'
           }
@@ -423,9 +427,15 @@
         </cds-stack>
         <cds-stack>
           <cds-progress-bar id="progress-bar" label="Synchronization Progress"
-            :value="$store.app.syncProgressPercentage"
-            :status="$store.app.state == $store.types.State.SYNCING ? 'active' : 'inactive'"
-            :helper-text="$store.app.syncProgressHelperText">
+            :value="$store.app.syncProgressPercentage" x-effect="
+              $nextTick(() => {
+                if($store.app.syncProgress == null) {
+                  if($store.app.state == $store.types.State.SYNCING || $store.app.state == $store.types.State.QUEUING) {
+                    $el.removeAttribute('value')
+                  }
+                }
+              })
+            " :helper-text="$store.app.syncProgressHelperText">
           </cds-progress-bar>
         </cds-stack>
         <cds-stack orientation="horizontal" style="--cds-stack-gap: 0.5em">
