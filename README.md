@@ -29,4 +29,5 @@ prodeskel server to prevent abuse, sorry!
 
 ## Demo video
 
-![Demo video](./7aae54df-cbc0-48e7-9e93-384b6bc1e2a5-1-encoded.webm)
+[7aae54df-cbc0-48e7-9e93-384b6bc1e2a5-1-encoded.webm](https://github.com/user-attachments/assets/01d414a2-8c2b-4f49-ae1a-dc2e5dab61dc)
+
