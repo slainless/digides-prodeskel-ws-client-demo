@@ -29,4 +29,4 @@ prodeskel server to prevent abuse, sorry!
 
 ## Demo video
 
-![Demo video](./7aae54df-cbc0-48e7-9e93-384b6bc1e2a5.webm)
+![Demo video](./7aae54df-cbc0-48e7-9e93-384b6bc1e2a5-1-encoded.webm)
