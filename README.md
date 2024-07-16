@@ -5,8 +5,8 @@
 A simple demonstration of DIGIDES Prodeskel WebSocket usage and 
 [prodeskel-ws](https://github.com/slainless/prodeskel-ws) integration to the app.
 
-Thanks to the current state of the technologies, it allows you to create an app 
-with just one HTML file. 
+Thanks to the current state of the technologies, it allows you to create a decent app 
+with just one HTML file without setting up any build system. 
 Built on top of 
 [Carbon Web Components](https://web-components.carbondesignsystem.com),
 with a bit of help from [TailwindCSS](https://tailwindcss.com/) 
